@@ -1,4 +1,7 @@
+"use client";
+
 import Button from "./components/Button";
+import { useAuth } from "./context/AuthContext";
 
 // ── Placeholder content (static — no fetching) ─────────────────────────
 const projects = [
@@ -96,6 +99,8 @@ function TagChip({ children }) {
 
 
 export default function Home() {
+  const { user, loading, logout } = useAuth();
+
   return (
     <div className="flex flex-col flex-1 text-foreground">
       {/* ── Top nav ─────────────────────────────────────────────── */}
@@ -103,9 +108,25 @@ export default function Home() {
         <span className="glitch neon-text text-primary text-xl font-bold tracking-[0.3em]">
           DEVFORGE
         </span>
-        <Button href="/auth" variant="outline" size="sm">
-          &gt; access_terminal
-        </Button>
+        {!loading ? (
+          user ? (
+              <div className="flex items-center gap-4 text-sm">
+                <span className="text-secondary neon-text">@{user.name || user.handle || "user"}</span>
+                <Button href="/dashboard" variant="primary" size="sm">
+                  Dashboard
+                </Button>
+                <Button onClick={logout} variant="outline" size="sm">
+                  Logout
+                </Button>
+              </div>
+          ) : (
+            <Button href="/auth" variant="outline" size="sm">
+              &gt; access_terminal
+            </Button>
+          )
+        ) : (
+          <div className="text-xs text-muted">loading...</div>
+        )}
       </header>
 
       {/* ── Hero ────────────────────────────────────────────────── */}

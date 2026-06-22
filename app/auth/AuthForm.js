@@ -4,8 +4,12 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import Field from "./Field";
 import Button from "../components/Button";
+import { useAuth } from "../context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function AuthForm() {
+  const { login, signup } = useAuth();
+  const router = useRouter();
   const [mode, setMode] = useState("login");
   const [errors, setErrors] = useState({ confirm: "", form: "" });
   const [name, setName] = useState("");
@@ -16,76 +20,11 @@ export default function AuthForm() {
 
   const isLogin = mode === "login";
 
-  async function sendLoginRequest() {
-    const formData = {
-      email,
-      password,
-    };
-
-    try {
-      const response = await fetch("http://localhost:5000/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const jsonResponse = await response.json();
-        console.log("RESPONSE.MESSAGE:", jsonResponse.message);
-
-        throw new Error(jsonResponse.message);
-      }
-
-      const data = await response.json();
-      console.log("Logged in:", data);
-      // I need data.token
-      localStorage.setItem("token", data.token);
-
-      setErrors((prev) => ({ ...prev, form: "" }));
-    } catch (err) {
-      console.error("Error:", err.message);
-      setErrors((prev) => ({ ...prev, form: err.message }));
-    }
-  }
-
   async function handleLogin(e) {
     e.preventDefault();
-    // TODO: store the auth token, then redirect to "/".
-
-    sendLoginRequest();
-
-    // The values you need are already in state:
-    console.log("login submit", { email, password });
-  }
-
-  async function sendSignupRequest() {
-    const formData = {
-      name,
-      email,
-      password,
-    };
-
     try {
-      const response = await fetch("http://localhost:5000/auth/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const jsonResponse = await response.json();
-        console.log("RESPONSE.MESSAGE:", jsonResponse.message);
-
-        throw new Error(jsonResponse.message);
-      }
-
-      const data = await response.json();
-      console.log("Signed up:", data);
-      setErrors((prev) => ({ ...prev, form: "" }));
+      await login(email, password);
+      router.push("/");
     } catch (err) {
       console.error("Error:", err.message);
       setErrors((prev) => ({ ...prev, form: err.message }));
@@ -94,8 +33,6 @@ export default function AuthForm() {
 
   async function handleSignup(e) {
     e.preventDefault();
-    // TODO: validate the fields (e.g. password === confirm),
-    // call your signup API, then log the user in / redirect to "/".
 
     if (password !== confirm) {
       setErrors((prev) => ({ ...prev, confirm: "Passwords do not match" }));
@@ -105,11 +42,13 @@ export default function AuthForm() {
 
     setErrors((prev) => ({ ...prev, confirm: "" }));
 
-    // make the post request
-    sendSignupRequest();
-
-    // The values you need are already in state:
-    console.log("signup submit", { name, email, password, confirm });
+    try {
+      await signup(name, email, password);
+      router.push("/");
+    } catch (err) {
+      console.error("Error:", err.message);
+      setErrors((prev) => ({ ...prev, form: err.message }));
+    }
   }
 
   return (
